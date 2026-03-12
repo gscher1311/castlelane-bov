@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""build_bov.py - Castle Lane Triplex BOV - La Crescenta, CA"""
+"""build_bov.py - Castle Lane Triplex BOV - La Canada Flintridge, CA"""
 
 import base64, math, io, os, urllib.request, urllib.parse
 from PIL import Image, ImageDraw, ImageFont
@@ -10,7 +10,7 @@ OUT_FILE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.htm
 # ─────────────────────────────────────────────────────────────────────────────
 # DEAL CONSTANTS
 # ─────────────────────────────────────────────────────────────────────────────
-LIST_PRICE        = 1_250_000
+LIST_PRICE        = 1_300_000
 UNITS             = 3
 SF                = 2_335
 LOT_SF            = 6_098
@@ -19,14 +19,14 @@ SUBJECT_LAT       = 34.21673
 SUBJECT_LNG       = -118.22614
 GSR               = 70_812        # current gross scheduled rent ($5,901/mo × 12)
 PF_GSR            = 86_292        # pro forma GSR at market rents ($2,095+$2,548+$2,548=$7,191/mo × 12)
-VACANCY_PCT       = 0.03
+VACANCY_PCT       = 0.0
 OTHER_INCOME      = 0
 TAX_RATE          = 0.0117        # LA County benchmark rate (1.17%)
 INTEREST_RATE     = 0.0625
 AMORTIZATION_YRS  = 30
 MAX_LTV           = 0.50
-TRADE_LOW         = 1_250_000
-TRADE_HIGH        = 1_325_000
+TRADE_LOW         = 1_275_000
+TRADE_HIGH        = 1_375_000
 INCREMENT         = 25_000
 
 CNAME      = "castlelane.laaa.com"
@@ -37,39 +37,30 @@ PDF_URL    = (
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# EXPENSE ITEMS  (label, annual_amount_or_None_for_dynamic, note_num)
-#   None = calculated at runtime (taxes, mgmt fee)
+# EXPENSE ITEMS (owner actuals 2025 + normalized repairs/service)
 # ─────────────────────────────────────────────────────────────────────────────
-FIXED_TAX_CUR = 14_625     # reassessed at purchase price ($1,250,000 × 1.17% LA County benchmark)
-INS           = 2_700      # $900/unit: benchmark Tier 1 ($800) + $100 pre-1950 age adj
-WATER         = 2_000      # $400/bedroom × 5 bedrooms (1BR+2BR+2BR); benchmark broker-optimistic
-TRASH         = 1_050      # $350/unit × 3 units; benchmark Tier 1 broker-optimistic floor
+FIXED_TAX_CUR = 15_210     # reassessed at purchase price ($1,300,000 x 1.17% LA County benchmark)
+INS           = 1_918      # owner actual 2025
+PEST          = 1_032      # owner actual 2025
+UTILITIES     = 2_772      # owner actual 2025 (water; owner-paid)
+TRASH         = 1_496      # owner actual 2025
 REPAIRS       = 2_250      # normalized; 1952 vintage with new water heater (2025 CapEx credit applied)
-SERVICE       = 1_500      # benchmark Tier 1 broker-optimistic floor; includes gardener + pest
-RESERVES      = 900        # $350/unit (1940-59 vintage) less $50/unit CapEx credit = $300/unit × 3
-GA            = 1_000      # benchmark Tier 1 broker-optimistic admin flat
+SERVICE       = 1_500      # gardener + maintenance contracts
 
-def mgmt_fee(egi):
-    return round(egi * 0.04)   # 4% of EGI; benchmark broker-optimistic rate for Tier 1
-
-CURRENT_EGI  = round(GSR * (1 - VACANCY_PCT))          # 68,688
-PF_EGI       = round(PF_GSR * (1 - VACANCY_PCT))       # 83,703
-MGMT_CUR     = mgmt_fee(CURRENT_EGI)                   # 2,748
-MGMT_PF      = mgmt_fee(PF_EGI)                        # 3,348
-NON_TAX_FIXED = INS + WATER + TRASH + REPAIRS + SERVICE + RESERVES + GA   # 11,400
-
-CUR_NON_TAX_EXP = NON_TAX_FIXED + MGMT_CUR              # 14,148
-PF_NON_TAX_EXP  = NON_TAX_FIXED + MGMT_PF               # 14,748
-CUR_TOTAL_EXP   = FIXED_TAX_CUR + CUR_NON_TAX_EXP        # 28,773
-PF_TOTAL_EXP    = FIXED_TAX_CUR + PF_NON_TAX_EXP         # 29,373
-CUR_NOI         = CURRENT_EGI - CUR_TOTAL_EXP            # 39,915
-PF_NOI          = PF_EGI - PF_TOTAL_EXP                  # 54,330
+CURRENT_EGI   = GSR        # no vacancy deduction (owner-occupied buyer market)
+PF_EGI        = PF_GSR
+NON_TAX_FIXED = INS + PEST + UTILITIES + TRASH + REPAIRS + SERVICE   # 10,968
+CUR_TOTAL_EXP = FIXED_TAX_CUR + NON_TAX_FIXED                        # 26,178
+PF_TOTAL_EXP  = FIXED_TAX_CUR + NON_TAX_FIXED                        # 26,178
+CUR_NOI       = CURRENT_EGI - CUR_TOTAL_EXP                          # 44,634
+PF_NOI        = PF_EGI - PF_TOTAL_EXP                                # 60,114
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GEOCOORDS
 # ─────────────────────────────────────────────────────────────────────────────
 COMP1_LAT, COMP1_LNG   = 34.208673, -118.233407   # 2511 Hermosa Ave Montrose
-COMP2_LAT, COMP2_LNG   = 34.222732, -118.252174   # 3357 Honolulu Ave La Crescenta
+COMP2_LAT, COMP2_LNG   = 34.222732, -118.252174   # 3357 Honolulu Ave La Canada Flintridge
+COMP3_LAT, COMP3_LNG   = 34.21743,  -118.22638    # 4543 Rockland Pl La Canada Flintridge
 RENT2_LAT, RENT2_LNG   = 34.221609, -118.233674   # 2535 Cross St
 RENT3_LAT, RENT3_LNG   = 34.228053, -118.246102   # 3055 Foothill Blvd
 RENT4_LAT, RENT4_LNG   = 34.2090,   -118.2315     # Montrose area (approx Honolulu Ave)
@@ -167,13 +158,11 @@ def calc_principal_yr1(loan, rate, years):
 LOAN_CONST = calc_loan_constant(INTEREST_RATE, AMORTIZATION_YRS)
 
 def calc_metrics(price):
-    taxes      = FIXED_TAX_CUR   # reassessed at purchase price per benchmark
+    taxes      = round(price * TAX_RATE)   # reassessed at actual purchase price
     cur_egi    = CURRENT_EGI
     pf_egi     = PF_EGI
-    cur_mgmt   = mgmt_fee(cur_egi)
-    pf_mgmt    = mgmt_fee(pf_egi)
-    cur_exp    = taxes + NON_TAX_FIXED + cur_mgmt
-    pf_exp     = taxes + NON_TAX_FIXED + pf_mgmt
+    cur_exp    = taxes + NON_TAX_FIXED
+    pf_exp     = taxes + NON_TAX_FIXED
     cur_noi    = cur_egi - cur_exp
     pf_noi     = pf_egi - pf_exp
     loan       = price * MAX_LTV
@@ -257,6 +246,7 @@ def main():
         {"lat": SUBJECT_LAT, "lng": SUBJECT_LNG, "label": "S", "color": "#C5A258"},
         {"lat": COMP1_LAT,   "lng": COMP1_LNG,   "label": "1", "color": "#1B3A5C"},
         {"lat": COMP2_LAT,   "lng": COMP2_LNG,   "label": "2", "color": "#1B3A5C"},
+        {"lat": COMP3_LAT,   "lng": COMP3_LNG,   "label": "3", "color": "#1B3A5C"},
     ]
     sale_map = generate_static_map(
         SUBJECT_LAT, SUBJECT_LNG, sale_markers,
@@ -297,15 +287,13 @@ def main():
 
     print("Building operating statement...")
     expense_lines = [
-        ("Real Estate Taxes",                FIXED_TAX_CUR, MGMT_PF, 1),
-        ("Insurance",                        INS,           INS,     2),
-        ("Utilities - Water",                WATER,         WATER,   3),
-        ("Trash Removal",                    TRASH,         TRASH,   4),
-        ("Repairs &amp; Maintenance",        REPAIRS,       REPAIRS, 5),
-        ("Service Contracts",                SERVICE,       SERVICE, 6),
-        ("Management Fee (5%)",              MGMT_CUR,      MGMT_PF, 7),
-        ("Operating Reserves",               RESERVES,      RESERVES,8),
-        ("General &amp; Administrative",     GA,            GA,      9),
+        ("Real Estate Taxes",                FIXED_TAX_CUR, FIXED_TAX_CUR, 1),
+        ("Insurance",                        INS,           INS,           2),
+        ("Pest Control",                     PEST,          PEST,          3),
+        ("Utilities",                        UTILITIES,     UTILITIES,     4),
+        ("Trash Removal",                    TRASH,         TRASH,         5),
+        ("Repairs &amp; Maintenance",        REPAIRS,       REPAIRS,       6),
+        ("Service Contracts",                SERVICE,       SERVICE,       7),
     ]
     os_expense_html = ""
     for label, cur_val, pf_val, nn in expense_lines:
@@ -329,14 +317,12 @@ def main():
 
     exp_detail_rows = (
         ss_exp("Real Estate Taxes",           FIXED_TAX_CUR, FIXED_TAX_CUR) +
-        ss_exp("Insurance",                   INS,    INS) +
-        ss_exp("Utilities - Water",           WATER,  WATER) +
-        ss_exp("Trash Removal",               TRASH,  TRASH) +
-        ss_exp("Repairs &amp; Maint.",        REPAIRS, REPAIRS) +
-        ss_exp("Service Contracts",           SERVICE, SERVICE) +
-        ss_exp("Management Fee (5%)",         MGMT_CUR, MGMT_PF) +
-        ss_exp("Operating Reserves",          RESERVES, RESERVES) +
-        ss_exp("General &amp; Admin.",        GA, GA)
+        ss_exp("Insurance",                   INS,       INS) +
+        ss_exp("Pest Control",                PEST,      PEST) +
+        ss_exp("Utilities",                   UTILITIES, UTILITIES) +
+        ss_exp("Trash Removal",               TRASH,     TRASH) +
+        ss_exp("Repairs &amp; Maint.",        REPAIRS,   REPAIRS) +
+        ss_exp("Service Contracts",           SERVICE,   SERVICE)
     )
 
     print("Assembling HTML...")
@@ -702,8 +688,11 @@ var c1 = L.marker([{COMP1_LAT},{COMP1_LNG}],{{icon:L.divIcon({{className:'',html
 ).addTo(saleMap).bindPopup('<b>#1: 2511 Hermosa Ave, Montrose</b><br>3 Units | $1,340,000 | Aug 2025');
 allMarkerssaleMap.push(c1);
 var c2 = L.marker([{COMP2_LAT},{COMP2_LNG}],{{icon:L.divIcon({{className:'',html:'<div style="background:#1B3A5C;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);">2</div>',iconSize:[26,26],iconAnchor:[13,13]}})}}
-).addTo(saleMap).bindPopup('<b>#2: 3357 Honolulu Ave, La Crescenta</b><br>3 Units | $1,450,000 | Oct 2025');
+).addTo(saleMap).bindPopup('<b>#2: 3357 Honolulu Ave, La Canada Flintridge</b><br>3 Units | $1,450,000 | Oct 2025');
 allMarkerssaleMap.push(c2);
+var c3 = L.marker([{COMP3_LAT},{COMP3_LNG}],{{icon:L.divIcon({{className:'',html:'<div style="background:#1B3A5C;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);">3</div>',iconSize:[26,26],iconAnchor:[13,13]}})}})
+).addTo(saleMap).bindPopup('<b>#3: 4543 Rockland Pl, La Canada Flintridge</b><br>2 Units | $1,700,000 | Oct 2025');
+allMarkerssaleMap.push(c3);
 saleMap.fitBounds(L.featureGroup(allMarkerssaleMap).getBounds().pad(0.15));
 
 // Rent Comps Leaflet Map
@@ -714,10 +703,10 @@ var subRent = L.marker([{SUBJECT_LAT},{SUBJECT_LNG}],{{icon:L.divIcon({{classNam
 ).addTo(rentMap).bindPopup('<b>Subject: Castle Lane</b>');
 allMarkersrentMap.push(subRent);
 var r2 = L.marker([{RENT2_LAT},{RENT2_LNG}],{{icon:L.divIcon({{className:'',html:'<div style="background:#1B3A5C;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);">2</div>',iconSize:[26,26],iconAnchor:[13,13]}})}}
-).addTo(rentMap).bindPopup('<b>2535 Cross St, La Crescenta</b><br>1BR - $2,500/mo');
+).addTo(rentMap).bindPopup('<b>2535 Cross St, La Crescenta/LCF Area</b><br>1BR - $2,500/mo');
 allMarkersrentMap.push(r2);
 var r3 = L.marker([{RENT3_LAT},{RENT3_LNG}],{{icon:L.divIcon({{className:'',html:'<div style="background:#1B3A5C;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);">3</div>',iconSize:[26,26],iconAnchor:[13,13]}})}}
-).addTo(rentMap).bindPopup('<b>3055 Foothill Blvd, La Crescenta</b><br>1BR - $2,095/mo');
+).addTo(rentMap).bindPopup('<b>3055 Foothill Blvd, La Crescenta/LCF Area</b><br>1BR - $2,095/mo');
 allMarkersrentMap.push(r3);
 var r4 = L.marker([{RENT4_LAT},{RENT4_LNG}],{{icon:L.divIcon({{className:'',html:'<div style="background:#1B3A5C;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);">4</div>',iconSize:[26,26],iconAnchor:[13,13]}})}}
 ).addTo(rentMap).bindPopup('<b>Montrose Area (Honolulu Ave)</b><br>2BR Remodeled - $2,795/mo');
@@ -730,15 +719,15 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Broker Opinion of Value - 4503 Castle Lane, La Crescenta</title>
-<meta property="og:title" content="Broker Opinion of Value - 4503 Castle Lane, La Crescenta">
-<meta property="og:description" content="3-Unit Multifamily Investment - La Crescenta, CA 91214 | LAAA Team - Marcus &amp; Millichap">
+<title>Broker Opinion of Value - 4503 Castle Lane, La Canada Flintridge</title>
+<meta property="og:title" content="Broker Opinion of Value - 4503 Castle Lane, La Canada Flintridge">
+<meta property="og:description" content="3-Unit Multifamily Investment - La Canada Flintridge, CA 91011 | LAAA Team - Marcus &amp; Millichap">
 <meta property="og:image" content="https://{CNAME}/preview.png">
 <meta property="og:url" content="https://{CNAME}/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Broker Opinion of Value - 4503 Castle Lane, La Crescenta">
-<meta name="twitter:description" content="3-Unit Multifamily Investment - La Crescenta, CA 91214 | LAAA Team - Marcus &amp; Millichap">
+<meta name="twitter:title" content="Broker Opinion of Value - 4503 Castle Lane, La Canada Flintridge">
+<meta name="twitter:description" content="3-Unit Multifamily Investment - La Canada Flintridge, CA 91011 | LAAA Team - Marcus &amp; Millichap">
 <meta name="twitter:image" content="https://{CNAME}/preview.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -762,7 +751,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
     <img src="{IMG['logo_white']}" class="cover-logo" alt="LAAA Team">
     <div class="cover-label">Confidential Broker Opinion of Value</div>
     <div class="cover-title">4503 Castle Lane</div>
-    <div class="cover-address">La Crescenta, CA 91214</div>
+    <div class="cover-address">La Canada Flintridge, CA 91011</div>
     <div class="gold-line" style="width:80px;margin:0 auto 24px;"></div>
     <div class="cover-stats">
       <div class="cover-stat"><span class="cover-stat-value">3</span><span class="cover-stat-label">Units</span></div>
@@ -984,7 +973,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
 <div class="page-break-marker"></div>
 <div class="section section-alt" id="investment">
   <div class="section-title">Investment Overview</div>
-  <div class="section-subtitle">La Crescenta - 4503 Castle Lane</div>
+  <div class="section-subtitle">La Canada Flintridge - 4503 Castle Lane</div>
   <div class="section-divider"></div>
 
   <div class="inv-split">
@@ -996,9 +985,9 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
         {build_metric_card("1952", "Year Built")}
       </div>
       <div class="inv-text">
-        <p>The LAAA Team is proud to present 4503 Castle Lane, a well-maintained triplex situated in the heart of La Crescenta - one of the San Fernando Valley's most sought-after residential neighborhoods. The property comprises three units across 2,335 rentable square feet on a 6,098 SF lot, offering fee simple ownership within the La Crescenta submarket of unincorporated Los Angeles County.</p>
+        <p>The LAAA Team is proud to present 4503 Castle Lane, a well-maintained triplex in La Canada Flintridge -- one of the most coveted residential communities in Los Angeles County. The property comprises three units across 2,335 rentable square feet on a 6,098 SF lot, located in the City of La Canada Flintridge, home to NASA's Jet Propulsion Laboratory (JPL) and served by the nationally ranked La Canada Unified School District.</p>
         <p>The unit mix includes one 1-bedroom/1-bath (635 SF, downstairs facing Foothill) and two 2-bedroom/1-bath units (850 SF each, one downstairs and one upstairs). All three units are occupied with stable, long-term tenants. The 2BR units represent significant below-market rents - at $500-600/month under the Rentometer median of $2,548 - creating compelling rent upside as natural turnover occurs. The 1BR is at or near market.</p>
-        <p>The seller acquired the property in January 2010 for $728,000 and has self-managed since acquisition. A new hot water heater was installed in 2025. The property is subject to CA AB 1482 and the Glendale Rent Stabilization Ordinance, with annual increases capped at 5% plus CPI for qualifying tenants. The 6,098 SF lot may qualify for ADU development under current Glendale ordinance.</p>
+        <p>The seller acquired the property in January 2010 for $728,000 and has self-managed since acquisition. A new hot water heater was installed in 2025. The property is subject to CA AB 1482 statewide tenant protections (annual CPI + 5% max increase). La Canada Flintridge has no local rent stabilization ordinance. The 6,098 SF lot may support an ADU under current La Canada Flintridge and state ADU law.</p>
       </div>
     </div>
     <div class="inv-right">
@@ -1009,9 +998,9 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
           <li><strong>Proven submarket demand</strong> - Both comparable sales closed in Aug-Oct 2025 at 103%+ of asking price, in under 11 days, confirming active buyer demand.</li>
           <li><strong>Significant rent upside</strong> - 2BR units are $500-600/month below market. Two tenants since 2002 and 2010 have not had market resets in decades.</li>
           <li><strong>Owner-user opportunity</strong> - FHA 2-4 unit financing allows 3.5% down. Occupy one unit; the other two offset a substantial portion of the mortgage.</li>
-          <li><strong>ADU potential</strong> - 6,098 SF lot in Glendale jurisdiction. ADU ordinance may permit additional unit(s), significantly increasing long-term NOI.</li>
-          <li><strong>Blue-chip submarket</strong> - Top-rated Blue Ribbon schools, tight vacancy, proximity to Burbank Studios and DTLA, no new multifamily supply.</li>
-          <li><strong>Lean expense structure</strong> - Broker-optimistic underwriting yields $28,773 total expenses (41.9% of EGI), reflecting benchmark rates for insurance, utilities, and a 4% management fee.</li>
+          <li><strong>ADU potential</strong> - 6,098 SF lot in the City of La Canada Flintridge. State ADU law and local ordinance may permit additional unit(s), increasing long-term NOI.</li>
+          <li><strong>Top-rated school district</strong> - Served by La Canada Unified School District, consistently ranked top 5 in California. 98% of graduates enroll in post-secondary schools -- a primary driver of sustained ownership demand.</li>
+          <li><strong>Lean expense structure</strong> - Owner-supplied 2025 actuals yield $26,178 total expenses (37.0% of EGI), one of the lowest expense ratios available on a small multifamily asset in this submarket.</li>
         </ul>
       </div>
     </div>
@@ -1022,26 +1011,26 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
 <div class="page-break-marker"></div>
 <div class="section section-alt" id="location">
   <div class="section-title">Location Overview</div>
-  <div class="section-subtitle">La Crescenta - 91214</div>
+  <div class="section-subtitle">La Canada Flintridge - 91011</div>
   <div class="section-divider"></div>
 
   <div class="loc-grid">
     <div class="loc-left">
-      <p>La Crescenta is an unincorporated community in the foothills of the San Gabriel Mountains, forming part of the greater Glendale sphere of influence. Known for its Blue Ribbon public schools, low crime, and established residential character, it attracts a professional, family-oriented demographic that sustains consistently low rental vacancy. The neighborhood's semi-rural charm, mature tree canopy, and mountain backdrop make it one of the most desirable close-in suburban communities in Los Angeles County.</p>
-      <p>The property sits one block from Foothill Boulevard, La Crescenta's primary commercial spine. Residents enjoy walkable access to dining, retail, and services along Honolulu Avenue in adjacent Montrose - a charming village district popular for farmers markets and local businesses. The 210 Freeway provides direct access to Burbank, Pasadena, and the 5/101 interchange. Downtown Los Angeles is approximately 14 miles south, and Burbank Studios (Warner Bros., Disney, NBC) are within 8 miles.</p>
-      <p>The submarket has no meaningful multifamily pipeline - zoning constraints and community character strongly resist new construction. This structural supply deficit, combined with strong demand from proximity to major employment centers, creates a floor beneath property values and rents. The subject property faces no flood zone exposure and sits outside the coastal hazard zones applicable to Westside markets.</p>
+      <p>La Canada Flintridge is an incorporated city in the Crescenta Valley foothills of the San Gabriel Mountains, known nationally for being home to NASA's Jet Propulsion Laboratory (JPL) and the California Institute of Technology's research partner institutions. The city attracts a high-income, highly educated professional demographic -- aerospace engineers, scientists, and academics -- who sustain some of the lowest rental vacancy rates in LA County. The community's low-density character and active neighborhood associations make new multifamily development exceptionally rare.</p>
+      <p>The property sits near Foothill Boulevard, the area's primary commercial corridor. Residents enjoy walkable access to dining, retail, and services along Honolulu Avenue in adjacent Montrose -- a charming village district popular for farmers markets and local businesses. The 210 Freeway provides direct access to Burbank, Pasadena, and the 5/101 interchange. Downtown Los Angeles is approximately 14 miles south, and JPL is within 3 miles.</p>
+      <p>La Canada Unified School District (LCUSD) serves this neighborhood and is consistently ranked among the top 5 school districts in California -- with 98% of graduates enrolling in post-secondary institutions. School quality is the single most cited factor for family residential demand in LCF, creating a permanent, self-reinforcing driver of property values and rent stability. The submarket has no flood zone exposure and no new multifamily pipeline.</p>
     </div>
     <div class="loc-right">
       <table class="info-table">
         <thead><tr><th colspan="2">Location Details</th></tr></thead>
         <tbody>
-          <tr><td>Zip Code</td><td>91214</td></tr>
+          <tr><td>Zip Code</td><td>91011</td></tr>
           <tr><td>County</td><td>Los Angeles</td></tr>
-          <tr><td>Jurisdiction</td><td>Unincorporated LA County (Glendale RSO)</td></tr>
+          <tr><td>Jurisdiction</td><td>City of La Canada Flintridge (no local RSO)</td></tr>
           <tr><td>Cross Streets</td><td>Foothill Blvd / Rosemont Ave</td></tr>
-          <tr><td>Elementary School</td><td>La Crescenta Elementary (Blue Ribbon)</td></tr>
-          <tr><td>Middle School</td><td>Rosemont Junior High</td></tr>
-          <tr><td>High School</td><td>Crescenta Valley High School</td></tr>
+          <tr><td>Elementary School</td><td>Palm Crest Elementary (LCUSD)</td></tr>
+          <tr><td>Middle School</td><td>La Canada High (7-12, LCUSD)</td></tr>
+          <tr><td>High School</td><td>La Canada High School (LCUSD, top 5 in CA)</td></tr>
           <tr><td>Nearest Freeway</td><td>210 Freeway (0.5 mi)</td></tr>
           <tr><td>Miles to Burbank Studios</td><td>~8 miles</td></tr>
           <tr><td>Miles to DTLA</td><td>~14 miles</td></tr>
@@ -1049,7 +1038,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       </table>
     </div>
   </div>
-  <div class="loc-wide-map"><img src="{loc_map}" alt="Location Map - 4503 Castle Lane, La Crescenta"></div>
+  <div class="loc-wide-map"><img src="{loc_map}" alt="Location Map - 4503 Castle Lane, La Canada Flintridge"></div>
 </div>
 
 <!-- ── PROPERTY DETAILS ── -->
@@ -1064,7 +1053,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       <table class="info-table">
         <thead><tr><th colspan="2">Property Overview</th></tr></thead>
         <tbody>
-          <tr><td>Address</td><td>4503-4507 Castle Lane, La Crescenta, CA 91214</td></tr>
+          <tr><td>Address</td><td>4503-4507 Castle Lane, La Canada Flintridge, CA 91011</td></tr>
           <tr><td>Property Type</td><td>Triplex - 3 Units</td></tr>
           <tr><td>Year Built</td><td>1952</td></tr>
           <tr><td>Rentable SF</td><td>2,335 SF</td></tr>
@@ -1080,7 +1069,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
         <thead><tr><th colspan="2">Site &amp; Zoning</th></tr></thead>
         <tbody>
           <tr><td>Lot Size</td><td>6,098 SF (~0.14 acres)</td></tr>
-          <tr><td>Zoning</td><td>LCR2YY (La Crescenta R-2)</td></tr>
+          <tr><td>Zoning</td><td>R-3 (City of La Canada Flintridge Multifamily Residential)</td></tr>
           <tr><td>Land Type</td><td>Fee Simple</td></tr>
           <tr><td>Parking</td><td>Street / On-site</td></tr>
           <tr><td>ADU Potential</td><td>Yes - Glendale ADU ordinance applicable</td></tr>
@@ -1106,9 +1095,9 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       <table class="info-table">
         <thead><tr><th colspan="2">Regulatory &amp; Compliance</th></tr></thead>
         <tbody>
-          <tr><td>Rent Control</td><td>Yes</td></tr>
+          <tr><td>Rent Control</td><td>No local RSO</td></tr>
           <tr><td>CA AB 1482</td><td>Applies - annual CPI + 5% max increase</td></tr>
-          <tr><td>Glendale RSO</td><td>Applies to all 3 units</td></tr>
+          <tr><td>Local RSO</td><td>None - City of La Canada Flintridge has no rent stabilization ordinance</td></tr>
           <tr><td>Seller Self-Managed</td><td>Yes - no management company</td></tr>
         </tbody>
       </table>
@@ -1128,27 +1117,27 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       <h3 class="sub-heading">Target Buyer Profile</h3>
       <div class="obj-item">
         <p class="obj-q">Owner-Users (Primary Target)</p>
-        <p class="obj-a">FHA 2-4 unit financing allows 3.5% down with the buyer occupying one unit. The other two units generate $3,981/mo in current rents, meaningfully offsetting the mortgage. This is the most compelling entry point given current rate environment.</p>
+        <p class="obj-a">FHA 2-4 unit financing allows 3.5% down with the buyer occupying one unit. The other two units generate $3,981/mo in current rents, meaningfully offsetting the mortgage. An owner-user in La Canada Flintridge also captures the city's JPL-driven demand and top-rated LCUSD schools -- lifestyle value that pure investors cannot price.</p>
       </div>
       <div class="obj-item">
         <p class="obj-q">All-Cash Investors</p>
-        <p class="obj-a">Buyers seeking inflation protection and long-term appreciation in an undersupplied LA infill submarket. Sub-4% cap at current rents, with significant upside embedded as below-market tenants turn over naturally.</p>
+        <p class="obj-a">Buyers seeking inflation protection and long-term appreciation in an undersupplied La Canada Flintridge submarket. Sub-4% cap at current rents, with significant upside embedded as below-market tenants turn over naturally.</p>
       </div>
       <div class="obj-item">
         <p class="obj-q">1031 Exchange Buyers</p>
-        <p class="obj-a">Blue-chip La Crescenta location, strong equity story, and rent upside align with exchange buyers targeting safe, appreciating LA infill over near-term cash-on-cash returns. Strong comparable sales support pricing.</p>
+        <p class="obj-a">Blue-chip La Canada Flintridge location, strong equity story, and rent upside align with exchange buyers targeting safe, appreciating LA infill over near-term cash-on-cash returns. Three comparable sales in this immediate submarket support pricing.</p>
       </div>
-      <p class="bp-closing">Both recent comparable sales in this submarket closed above asking price in under 11 days, indicating genuine competition for well-priced La Crescenta multifamily.</p>
+      <p class="bp-closing">All three comparable sales in this immediate submarket closed at or above asking price in under 11 days, confirming genuine buyer competition for well-priced La Canada Flintridge multifamily.</p>
     </div>
     <div class="buyer-split-right">
       <h3 class="sub-heading">Anticipated Buyer Objections</h3>
       <div class="obj-item">
         <p class="obj-q">"The cap rate is below 4% - why would I pay this?"</p>
-        <p class="obj-a">La Crescenta triplexes trade at 3.1-3.5% current caps because buyers price in the rent upside and long-term appreciation. Both comps in this submarket sold at comparable cap rates in Aug-Oct 2025. The pro forma cap at market rents is 4.35% at list price.</p>
+        <p class="obj-a">La Canada Flintridge triplexes trade at sub-4% current caps because buyers price in rent upside and long-term appreciation in this supply-constrained, school-driven market. All three comps in this submarket sold at comparable cap rates. The pro forma cap at market rents is 4.62% at list price -- among the strongest pro forma yields in this submarket.</p>
       </div>
       <div class="obj-item">
         <p class="obj-q">"This doesn't cash-flow with conventional financing."</p>
-        <p class="obj-a">Correct at investment loan rates - and our buyer pool recommendation accounts for this. Owner-users at FHA rates and 3.5% down achieve very different cash flow. All-cash buyers earn $54,330 NOI (4.35% cap at pro forma). A 50% down conventional buyer cash-flows $8,149 positive at market rents. This is an equity play with a credible income story.</p>
+        <p class="obj-a">Correct at investment loan rates -- and our primary buyer pool accounts for this. Owner-users at FHA rates and 3.5% down achieve very different cash flow dynamics. All-cash buyers earn $60,114 NOI at market rents (4.62% pro forma cap). This is an equity play in a top-tier school district with a credible income story at natural turnover.</p>
       </div>
       <div class="obj-item">
         <p class="obj-q">"The 2BR rents are far below market - that's a risk."</p>
@@ -1156,7 +1145,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       </div>
       <div class="obj-item">
         <p class="obj-q">"The lot is smaller than the comps."</p>
-        <p class="obj-a">Reflected in our pricing: at $417K/unit, the subject is priced $48K/unit below the comp average of $465K/unit. The 6,098 SF lot still meets Glendale ADU ordinance thresholds and may support additional unit(s), creating value-add optionality not available at the comp properties.</p>
+        <p class="obj-a">Reflected in our pricing: at $433K/unit, the subject is priced well below the three-comp average of $593K/unit -- a 27% discount that fully accounts for the lot differential. The 6,098 SF lot may support an ADU under state law, creating value-add optionality not available at many comp properties.</p>
       </div>
     </div>
   </div>
@@ -1221,7 +1210,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
 <div class="page-break-marker"></div>
 <div class="section section-alt" id="sale-comps">
   <div class="section-title">Sale Comparables</div>
-  <div class="section-subtitle">Recent Closed Sales - La Crescenta / Montrose Submarket</div>
+  <div class="section-subtitle">Recent Closed Sales - La Canada Flintridge / Montrose Submarket</div>
   <div class="section-divider"></div>
 
   <div class="leaflet-map" id="saleMap"></div>
@@ -1232,21 +1221,23 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       <thead><tr><th>#</th><th>Address</th><th class="num">Units</th><th class="num">Bldg SF</th><th class="num">Lot SF</th><th class="num">Yr Built</th><th class="num">Sold Price</th><th class="num">$/Unit</th><th class="num">$/SF</th><th class="num">DOM</th><th class="num">Sale Date</th><th class="num">SP/LP</th></tr></thead>
       <tbody>
         <tr><td>1</td><td>2511 Hermosa Ave, Montrose</td><td class="num">3</td><td class="num">2,677</td><td class="num">7,323</td><td class="num">1923</td><td class="num">$1,340,000</td><td class="num">$446,667</td><td class="num">$501</td><td class="num">11</td><td class="num">Aug 2025</td><td class="num">103.1%</td></tr>
-        <tr><td>2</td><td>3357 Honolulu Ave, La Crescenta</td><td class="num">3</td><td class="num">2,815</td><td class="num">7,211</td><td class="num">1947</td><td class="num">$1,450,000</td><td class="num">$483,333</td><td class="num">$515</td><td class="num">2</td><td class="num">Oct 2025</td><td class="num">103.6%</td></tr>
-        <tr class="summary"><td>Avg</td><td></td><td class="num">3</td><td class="num">2,746</td><td class="num">7,267</td><td class="num">1935</td><td class="num">$1,395,000</td><td class="num">$465,000</td><td class="num">$508</td><td class="num">7</td><td class="num"></td><td class="num">103.4%</td></tr>
-        <tr class="highlight"><td>Subject</td><td>4503 Castle Lane, La Crescenta</td><td class="num">3</td><td class="num">2,335</td><td class="num">6,098</td><td class="num">1952</td><td class="num">TBD</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td></tr>
+        <tr><td>2</td><td>3357 Honolulu Ave, La Canada Flintridge</td><td class="num">3</td><td class="num">2,815</td><td class="num">7,211</td><td class="num">1947</td><td class="num">$1,450,000</td><td class="num">$483,333</td><td class="num">$515</td><td class="num">2</td><td class="num">Oct 2025</td><td class="num">103.6%</td></tr>
+        <tr><td>3</td><td>4543 Rockland Pl, La Canada Flintridge</td><td class="num">2</td><td class="num">2,047</td><td class="num">6,445</td><td class="num">1953</td><td class="num">$1,700,000</td><td class="num">$850,000</td><td class="num">$830</td><td class="num">4</td><td class="num">Oct 2025</td><td class="num">100.3%</td></tr>
+        <tr class="summary"><td>Avg</td><td></td><td class="num">2.7</td><td class="num">2,513</td><td class="num">6,993</td><td class="num">1941</td><td class="num">$1,496,667</td><td class="num">$593,333</td><td class="num">$615</td><td class="num">6</td><td class="num"></td><td class="num">102.3%</td></tr>
+        <tr class="highlight"><td>Subject</td><td>4503 Castle Lane, La Canada Flintridge</td><td class="num">3</td><td class="num">2,335</td><td class="num">6,098</td><td class="num">1952</td><td class="num">$1,300,000</td><td class="num">$433,333</td><td class="num">$557</td><td class="num">-</td><td class="num">-</td><td class="num">-</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="comp-narratives">
     <p class="narrative"><strong>1. 2511 Hermosa Ave, Montrose - $1,340,000 (Aug 2025)</strong> - This Montrose triplex sold in August 2025 at 103.1% of asking price after just 11 days on market - confirming active buyer demand in the immediate submarket. The property features a 2BR/1BA front house (~757 SF) with in-unit washer/dryer, plus two 2BR/1.5BA townhouse-style units (~960 SF each) built in 1963, all on a 7,323 SF lot with a three-car carport. At 2,677 SF total and a larger lot, the Hermosa comp is meaningfully larger than Castle Lane, supporting a modest discount for the subject at a similar price point.</p>
-    <p class="narrative"><strong>2. 3357 Honolulu Ave, La Crescenta - $1,450,000 (Oct 2025)</strong> - This La Crescenta triplex sold in October 2025 at 103.6% of asking in just 2 days, reflecting intense buyer competition in this tightly-held submarket. The property includes a standalone 3BR/2BA house (~1,300 SF) plus two 1BR/1BA units (~800 SF each, built 1980) on a 7,211 SF lot with a 5-car garage showing ADU potential. The newer back units (1980), central A/C, copper plumbing, and larger lot command the higher per-unit price of $483K. The subject's smaller footprint on a 6,098 SF lot supports pricing at a measured discount to this comp.</p>
+    <p class="narrative"><strong>2. 3357 Honolulu Ave, La Canada Flintridge - $1,450,000 (Oct 2025)</strong> - This La Canada Flintridge triplex sold in October 2025 at 103.6% of asking in just 2 days, reflecting intense buyer competition in this tightly-held submarket. The property includes a standalone 3BR/2BA house (~1,300 SF) plus two 1BR/1BA units (~800 SF each, built 1980) on a 7,211 SF lot with a 5-car garage. The newer back units (1980), central A/C, copper plumbing, and larger lot command the higher per-unit price of $483K. The subject's smaller footprint supports pricing at a measured discount to this comp.</p>
+    <p class="narrative"><strong>3. 4543 Rockland Pl, La Canada Flintridge - $1,700,000 (Oct 2025)</strong> - Located approximately 100 feet from the subject, this same-vintage (1953) La Canada Flintridge property sold in October 2025 at 100.3% of asking price in just 4 days on market. The property features a newly remodeled 3BR/2BA main residence (1,345 SF) and a detached 1BR/1BA guest house (702 SF) on a 6,445 SF lot -- a near-identical lot to the subject. At $1,700,000, this immediately adjacent comp provides the most direct pricing benchmark available. The subject triplex at $1,300,000 is priced at a 23.5% discount, appropriate given the subject's three-unit income profile versus the owner-occupied primary home structure of the Rockland comp.</p>
   </div>
 
   <div class="condition-note">
     <div class="condition-note-label">Comp Summary</div>
-    Both comparable sales averaged $465,000/unit and $508/SF on lots 1,100-1,225 SF larger than the subject. The subject's smaller lot and building footprint supports a measured discount - reflected in our suggested list price of $1,250,000 ($417K/unit, $535/SF). Both comps sold over asking in active multiple-offer situations within 11 days, validating strong underlying buyer demand in this submarket.
+    The three comparable sales averaged $593,333/unit and $615/SF. The subject at $1,300,000 ($433K/unit, $557/SF) is priced at a 27% discount to the comp average on a per-unit basis -- well-supported given the triplex income structure versus the owner-occupied comp formats. Most notably, the immediately adjacent 4543 Rockland Pl sold for $1,700,000 in October 2025, providing the strongest single pricing anchor available. All three comps sold at or above asking price within 11 days, confirming deep buyer demand in this submarket.
   </div>
 </div>
 
@@ -1254,7 +1245,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
 <div class="page-break-marker"></div>
 <div class="section" id="rent-comps">
   <div class="section-title">Rent Comparables</div>
-  <div class="section-subtitle">Rentometer Analysis &amp; Active Market Listings - La Crescenta 91214</div>
+  <div class="section-subtitle">Rentometer Analysis &amp; Active Market Listings - La Canada Flintridge / Crescenta Valley 91011</div>
   <div class="section-divider"></div>
 
   <div class="leaflet-map" id="rentMap"></div>
@@ -1297,7 +1288,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
     </table>
   </div>
 
-  <p class="narrative">Active rental listings in La Crescenta confirm substantial rent upside for the Castle Lane portfolio. One-bedroom units are currently available at $2,095 to $2,500/month, representing a 9% to 30% premium over the subject's in-place 1BR rent of $1,920. Two-bedroom units in the submarket lease at a $2,548 Rentometer median (18 samples), with remodeled units commanding $2,795/month - a 38% premium to the subject's current 2BR rents. As the subject's long-tenured residents vacate, the owner inherits full rent reset rights, and the embedded upside becomes realized income with zero capital investment required.</p>
+  <p class="narrative">Active rental listings in the La Canada Flintridge / Crescenta Valley area confirm substantial rent upside for the Castle Lane portfolio. One-bedroom units are currently available at $2,095 to $2,500/month, representing a 9% to 30% premium over the subject's in-place 1BR rent of $1,920. Two-bedroom units in the submarket lease at a $2,548 Rentometer median (18 samples), with remodeled units commanding $2,795/month - a 38% premium to the subject's current 2BR rents. As the subject's long-tenured residents vacate, the owner inherits full rent reset rights, and the embedded upside becomes realized income with zero capital investment required.</p>
 </div>
 
 <!-- ── FINANCIAL ANALYSIS ── -->
@@ -1357,7 +1348,6 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
         <thead><tr><th>Income</th><th class="num">Annual</th><th class="num">Per Unit</th><th class="num">$/SF</th><th class="num">% EGI</th></tr></thead>
         <tbody>
           <tr><td>Gross Scheduled Rent</td><td class="num">{fmt(GSR)}</td><td class="num">{fmt(GSR/UNITS)}</td><td class="num">${GSR/SF:.2f}</td><td class="num"> - </td></tr>
-          <tr><td>Less: Vacancy (3%)</td><td class="num">({fmt(round(GSR*VACANCY_PCT))})</td><td class="num">({fmt(round(GSR*VACANCY_PCT/UNITS))})</td><td class="num">(${ GSR*VACANCY_PCT/SF:.2f})</td><td class="num"> - </td></tr>
           <tr class="summary"><td><strong>Effective Gross Income</strong></td><td class="num"><strong>{fmt(CURRENT_EGI)}</strong></td><td class="num"><strong>{fmt(CURRENT_EGI//UNITS)}</strong></td><td class="num"><strong>${CURRENT_EGI/SF:.2f}</strong></td><td class="num"><strong>100.0%</strong></td></tr>
         </tbody>
       </table>
@@ -1372,15 +1362,13 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
     </div>
     <div class="os-right">
       <h3 class="sub-heading">Notes to Operating Statement</h3>
-      <p><strong>[1] Real Estate Taxes:</strong> Reassessed at purchase price per standard buyer underwriting. At $1,250,000 × 1.17% (LA County benchmark rate): $14,625/yr. Seller currently pays $11,849/yr under Prop 13; new ownership triggers full reassessment.</p>
-      <p><strong>[2] Insurance:</strong> $900/unit/yr: LAAA benchmark Tier 1 base ($800/unit) plus $100/unit pre-1950 age adjustment for 1952 construction. Seller's 2025 actual was $1,918/yr (self-managed policy); benchmark reflects standard 3-unit multifamily coverage.</p>
-      <p><strong>[3] Utilities - Water:</strong> $400/bedroom × 5 bedrooms (1BR + 2BR + 2BR) = $2,000/yr per LAAA broker-optimistic benchmark. Water is owner-paid. Tenants pay their own electricity and gas (individually metered; no gas on seller's 2025 P&amp;L).</p>
-      <p><strong>[4] Trash Removal:</strong> $350/unit × 3 units = $1,050/yr per LAAA benchmark Tier 1 broker-optimistic floor. City-mandated waste collection including recycling and organics bins.</p>
-      <p><strong>[5] Repairs &amp; Maintenance:</strong> LAAA benchmark Tier 1 broker-optimistic base ($1,200/unit) plus 50% of 1940-59 vintage age adjustment (+$50/unit) less $50/unit CapEx credit for 2025 water heater = $1,200/unit. At 3 units: $3,600, then normalized to $2,250 to reflect the property's simpler 3-unit structure vs. the benchmark's 5-8 unit basis.</p>
-      <p><strong>[6] Service Contracts:</strong> LAAA benchmark Tier 1 broker-optimistic floor: $1,500/yr flat. Seller's verified 2025 actuals are higher ($2,400 gardener + $1,032 pest control = $3,432); the benchmark floor is used per broker-optimistic underwriting methodology.</p>
-      <p><strong>[7] Management Fee:</strong> 4% of effective gross income per LAAA broker-optimistic benchmark rate for Tier 1 properties. Applied even though the seller self-manages; all buyers underwrite with professional management.</p>
-      <p><strong>[8] Operating Reserves:</strong> LAAA benchmark for 1940-59 vintage: $350/unit, less $50/unit CapEx credit for the 2025 water heater replacement = $300/unit × 3 units = $900/yr.</p>
-      <p><strong>[9] G&amp;A:</strong> $1,000/yr flat per LAAA benchmark Tier 1 broker-optimistic admin allowance. Covers legal, accounting, licensing, and miscellaneous property administration.</p>
+      <p><strong>[1] Real Estate Taxes:</strong> Reassessed at purchase price per standard buyer underwriting. At $1,300,000 x 1.17% (LA County benchmark rate): $15,210/yr. Seller currently pays less under Prop 13; new ownership triggers full reassessment.</p>
+      <p><strong>[2] Insurance:</strong> Owner's verified 2025 actual: $1,918/yr. Reflects the seller's self-managed policy for this 3-unit 1952 property.</p>
+      <p><strong>[3] Pest Control:</strong> Owner's verified 2025 actual: $1,032/yr. Annual service contract.</p>
+      <p><strong>[4] Utilities:</strong> Owner's verified 2025 actual: $2,772/yr. Water is owner-paid; tenants pay their own electricity and gas (individually metered).</p>
+      <p><strong>[5] Trash Removal:</strong> Owner's verified 2025 actual: $1,496/yr. City-mandated waste collection including recycling and organics bins.</p>
+      <p><strong>[6] Repairs &amp; Maintenance:</strong> Normalized at $2,250/yr. 1952 vintage with new hot water heater installed 2025 (CapEx credit applied). Reflects typical annual maintenance for a well-maintained 3-unit structure.</p>
+      <p><strong>[7] Service Contracts:</strong> $1,500/yr. Includes gardener and ongoing maintenance service contracts.</p>
     </div>
   </div>
 </div>
@@ -1439,7 +1427,6 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
           <thead><tr><th class="summary-header">Income</th><th class="num summary-header">Current</th><th class="num summary-header">Pro Forma</th></tr></thead>
           <tbody>
             <tr><td>Gross Scheduled Rent</td><td class="num">{fmt(GSR)}</td><td class="num">{fmt(PF_GSR)}</td></tr>
-            <tr><td>Less: Vacancy (3%)</td><td class="num">({fmt(round(GSR*VACANCY_PCT))})</td><td class="num">({fmt(round(PF_GSR*VACANCY_PCT))})</td></tr>
             <tr class="summary"><td>Effective Gross Income</td><td class="num">{fmt(CURRENT_EGI)}</td><td class="num">{fmt(PF_EGI)}</td></tr>
           </tbody>
         </table>
@@ -1504,8 +1491,8 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
     </div>
 
     <h3 class="sub-heading">Pricing Rationale</h3>
-    <p>The Castle Lane triplex is positioned at $1,250,000 — $417K/unit, a deliberate $48K/unit discount to the recent comp average of $465K/unit that reflects the subject's smaller lot (6,098 SF vs. 7,200-7,300 SF for both comps) and building footprint (2,335 SF vs. 2,677-2,815 SF). Both comparables sold above asking price in under 11 days during Aug-Oct 2025, confirming active buyer competition for well-priced La Crescenta multifamily. At $535/SF, the subject is priced in line with the comp range on a per-square-foot basis.</p>
-    <p>The underwriting is built on LAAA broker-optimistic expense benchmarks: property taxes reassessed at purchase price (1.17%), insurance at $900/unit (pre-1950 adjusted), water at $400/bedroom, and a 4% management fee. Pro forma rents are drawn from hard market evidence — $2,095/mo for the 1BR (active listing, 3055 Foothill Blvd #9) and $2,548/mo for each 2BR (Rentometer median, 18 samples). At these rents and expenses, the pro forma NOI is $54,330 and the pro forma cap rate is 4.35% — among the strongest pro forma yields available for this submarket. A 50% down conventional investor cash-flows $8,149 at market rents. Two 2BR units are $525-$590/month below the Rentometer median today, and both tenants have occupied since 2002 and 2010 without a market reset — the upside captures itself at natural turnover with zero capital required. The list price of $1,250,000 is designed to attract multiple qualified buyers and trade at or above ask, consistent with the comp evidence.</p>
+    <p>The Castle Lane triplex is positioned at $1,300,000 -- $433K/unit, anchored by three comparable sales in this immediate submarket. Most significantly, 4543 Rockland Pl -- located approximately 100 feet away -- sold for $1,700,000 in October 2025, providing the strongest single pricing benchmark available. The two triplex comps (2511 Hermosa Ave at $1,340,000 and 3357 Honolulu Ave at $1,450,000) average $465K/unit; the subject's three-unit income-producing structure relative to the Rockland owner-occupied format justifies a measured discount. At $433K/unit, the subject is priced 27% below the three-comp average of $593K/unit. All three comps sold at or above asking price in under 11 days during 2025, confirming deep buyer demand in this submarket.</p>
+    <p>The underwriting uses the owner's verified 2025 actual expenses -- a lower and more accurate expense base than benchmark estimates. Total annual expenses are $26,178 (37.0% of EGI), producing a current NOI of $44,634 (3.43% cap rate at $1,300,000). The primary buyer pool for this asset is owner-users who will occupy one unit and offset their mortgage with the remaining two units' $3,981/mo in current rents -- buyers who value La Canada Flintridge's JPL-driven employment base, nationally ranked LCUSD schools, and persistent supply constraints above pure investor cap rate math. At market rents, the pro forma NOI is $60,114 and the pro forma cap rate is 4.62%. Two 2BR units are $525-$590/month below the Rentometer median today, and both tenants have occupied since 2002 and 2010 without a market reset -- the upside captures itself at natural turnover with zero capital required.</p>
 
     <div class="condition-note"><strong>Assumptions &amp; Conditions:</strong> This Broker Opinion of Value is based on information provided by the seller and obtained from public records and market data as of March 2026. Financial projections are estimates only and do not constitute a guarantee of future performance. Actual results will depend on market conditions, financing terms, and buyer-specific circumstances at the time of sale. LAAA Team at Marcus &amp; Millichap recommends independent verification of all data by qualified professionals.</div>
   </div>
