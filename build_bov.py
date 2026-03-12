@@ -10,7 +10,7 @@ OUT_FILE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.htm
 # ─────────────────────────────────────────────────────────────────────────────
 # DEAL CONSTANTS
 # ─────────────────────────────────────────────────────────────────────────────
-LIST_PRICE        = 1_299_000
+LIST_PRICE        = 1_250_000
 UNITS             = 3
 SF                = 2_335
 LOT_SF            = 6_098
@@ -18,15 +18,15 @@ YEAR_BUILT        = 1952
 SUBJECT_LAT       = 34.21673
 SUBJECT_LNG       = -118.22614
 GSR               = 70_812        # current gross scheduled rent ($5,901/mo × 12)
-PF_GSR            = 81_420        # pro forma GSR (per seller model)
+PF_GSR            = 86_292        # pro forma GSR at market rents ($2,095+$2,548+$2,548=$7,191/mo × 12)
 VACANCY_PCT       = 0.03
 OTHER_INCOME      = 0
-TAX_RATE          = 0.0113        # Glendale 1.13%
+TAX_RATE          = 0.0117        # LA County benchmark rate (1.17%)
 INTEREST_RATE     = 0.0625
 AMORTIZATION_YRS  = 30
 MAX_LTV           = 0.50
 TRADE_LOW         = 1_250_000
-TRADE_HIGH        = 1_350_000
+TRADE_HIGH        = 1_325_000
 INCREMENT         = 25_000
 
 CNAME      = "castlelane.laaa.com"
@@ -40,30 +40,30 @@ PDF_URL    = (
 # EXPENSE ITEMS  (label, annual_amount_or_None_for_dynamic, note_num)
 #   None = calculated at runtime (taxes, mgmt fee)
 # ─────────────────────────────────────────────────────────────────────────────
-FIXED_TAX_CUR = 14_400     # seller current Prop 13 basis
-INS           = 2_919
-WATER         = 2_772
-TRASH         = 1_495
-REPAIRS       = 2_250
-SERVICE       = 3_000
-RESERVES      = 600
-GA            = 450
+FIXED_TAX_CUR = 14_625     # reassessed at purchase price ($1,250,000 × 1.17% LA County benchmark)
+INS           = 2_700      # $900/unit: benchmark Tier 1 ($800) + $100 pre-1950 age adj
+WATER         = 2_000      # $400/bedroom × 5 bedrooms (1BR+2BR+2BR); benchmark broker-optimistic
+TRASH         = 1_050      # $350/unit × 3 units; benchmark Tier 1 broker-optimistic floor
+REPAIRS       = 2_250      # normalized; 1952 vintage with new water heater (2025 CapEx credit applied)
+SERVICE       = 1_500      # benchmark Tier 1 broker-optimistic floor; includes gardener + pest
+RESERVES      = 900        # $350/unit (1940-59 vintage) less $50/unit CapEx credit = $300/unit × 3
+GA            = 1_000      # benchmark Tier 1 broker-optimistic admin flat
 
 def mgmt_fee(egi):
-    return round(egi * 0.05)
+    return round(egi * 0.04)   # 4% of EGI; benchmark broker-optimistic rate for Tier 1
 
 CURRENT_EGI  = round(GSR * (1 - VACANCY_PCT))          # 68,688
-PF_EGI       = round(PF_GSR * (1 - VACANCY_PCT))       # 78,977
-MGMT_CUR     = mgmt_fee(CURRENT_EGI)                   # 3,434
-MGMT_PF      = mgmt_fee(PF_EGI)                        # 3,949
-NON_TAX_FIXED = INS + WATER + TRASH + REPAIRS + SERVICE + RESERVES + GA   # 13,486
+PF_EGI       = round(PF_GSR * (1 - VACANCY_PCT))       # 83,703
+MGMT_CUR     = mgmt_fee(CURRENT_EGI)                   # 2,748
+MGMT_PF      = mgmt_fee(PF_EGI)                        # 3,348
+NON_TAX_FIXED = INS + WATER + TRASH + REPAIRS + SERVICE + RESERVES + GA   # 11,400
 
-CUR_NON_TAX_EXP = NON_TAX_FIXED + MGMT_CUR              # 16,920
-PF_NON_TAX_EXP  = NON_TAX_FIXED + MGMT_PF               # 17,435
-CUR_TOTAL_EXP   = FIXED_TAX_CUR + CUR_NON_TAX_EXP        # 31,320
-PF_TOTAL_EXP    = FIXED_TAX_CUR + PF_NON_TAX_EXP         # 31,835
-CUR_NOI         = CURRENT_EGI - CUR_TOTAL_EXP            # 37,368
-PF_NOI          = PF_EGI - PF_TOTAL_EXP                  # 47,143
+CUR_NON_TAX_EXP = NON_TAX_FIXED + MGMT_CUR              # 14,148
+PF_NON_TAX_EXP  = NON_TAX_FIXED + MGMT_PF               # 14,748
+CUR_TOTAL_EXP   = FIXED_TAX_CUR + CUR_NON_TAX_EXP        # 28,773
+PF_TOTAL_EXP    = FIXED_TAX_CUR + PF_NON_TAX_EXP         # 29,373
+CUR_NOI         = CURRENT_EGI - CUR_TOTAL_EXP            # 39,915
+PF_NOI          = PF_EGI - PF_TOTAL_EXP                  # 54,330
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GEOCOORDS
@@ -167,7 +167,7 @@ def calc_principal_yr1(loan, rate, years):
 LOAN_CONST = calc_loan_constant(INTEREST_RATE, AMORTIZATION_YRS)
 
 def calc_metrics(price):
-    taxes      = FIXED_TAX_CUR   # keep at seller's current basis (Prop 13)
+    taxes      = FIXED_TAX_CUR   # reassessed at purchase price per benchmark
     cur_egi    = CURRENT_EGI
     pf_egi     = PF_EGI
     cur_mgmt   = mgmt_fee(cur_egi)
@@ -1011,7 +1011,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
           <li><strong>Owner-user opportunity</strong> - FHA 2-4 unit financing allows 3.5% down. Occupy one unit; the other two offset a substantial portion of the mortgage.</li>
           <li><strong>ADU potential</strong> - 6,098 SF lot in Glendale jurisdiction. ADU ordinance may permit additional unit(s), significantly increasing long-term NOI.</li>
           <li><strong>Blue-chip submarket</strong> - Top-rated Blue Ribbon schools, tight vacancy, proximity to Burbank Studios and DTLA, no new multifamily supply.</li>
-          <li><strong>Low expense ratio</strong> - Self-managed, lean operation. Normalized at 5% management: $31,320 total expenses, 45.6% of effective gross income.</li>
+          <li><strong>Lean expense structure</strong> - Broker-optimistic underwriting yields $28,773 total expenses (41.9% of EGI), reflecting benchmark rates for insurance, utilities, and a 4% management fee.</li>
         </ul>
       </div>
     </div>
@@ -1144,11 +1144,11 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       <h3 class="sub-heading">Anticipated Buyer Objections</h3>
       <div class="obj-item">
         <p class="obj-q">"The cap rate is below 4% - why would I pay this?"</p>
-        <p class="obj-a">La Crescenta triplexes trade at 3.1-3.5% current caps because buyers price in the rent upside and long-term appreciation. Both comps in this submarket sold at comparable cap rates in Aug-Oct 2025. The pro forma cap at market rents is 3.63% at list price.</p>
+        <p class="obj-a">La Crescenta triplexes trade at 3.1-3.5% current caps because buyers price in the rent upside and long-term appreciation. Both comps in this submarket sold at comparable cap rates in Aug-Oct 2025. The pro forma cap at market rents is 4.35% at list price.</p>
       </div>
       <div class="obj-item">
         <p class="obj-q">"This doesn't cash-flow with conventional financing."</p>
-        <p class="obj-a">Correct at investment loan rates - and our buyer pool recommendation accounts for this. Owner-users at FHA rates and 3.5% down achieve very different cash flow. All-cash buyers earn $47,143 NOI (3.63% cap at pro forma). This is an equity play, not a yield play.</p>
+        <p class="obj-a">Correct at investment loan rates - and our buyer pool recommendation accounts for this. Owner-users at FHA rates and 3.5% down achieve very different cash flow. All-cash buyers earn $54,330 NOI (4.35% cap at pro forma). A 50% down conventional buyer cash-flows $8,149 positive at market rents. This is an equity play with a credible income story.</p>
       </div>
       <div class="obj-item">
         <p class="obj-q">"The 2BR rents are far below market - that's a risk."</p>
@@ -1156,7 +1156,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       </div>
       <div class="obj-item">
         <p class="obj-q">"The lot is smaller than the comps."</p>
-        <p class="obj-a">Reflected in our pricing: at $433K/unit, the subject is priced $32K/unit below the comp average of $465K/unit. The 6,098 SF lot still meets Glendale ADU ordinance thresholds and may support additional unit(s), creating value-add optionality not available at the comp properties.</p>
+        <p class="obj-a">Reflected in our pricing: at $417K/unit, the subject is priced $48K/unit below the comp average of $465K/unit. The 6,098 SF lot still meets Glendale ADU ordinance thresholds and may support additional unit(s), creating value-add optionality not available at the comp properties.</p>
       </div>
     </div>
   </div>
@@ -1188,16 +1188,16 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
       </table>
     </div>
     <div>
-      <h3 class="sub-heading" style="margin-top:0;">Financing Reality Check at $1,200,000</h3>
-      <table>
-        <thead><tr><th>Scenario</th><th>Down</th><th>Rate</th><th>Annual DS</th><th>PF NOI</th><th>Cash Flow</th></tr></thead>
-        <tbody>
-          <tr><td>25% Down - Inv. Conv.</td><td>$300K</td><td>6.75%</td><td>$70,170</td><td>$47,143</td><td style="color:#c0392b;">($23,027)</td></tr>
-          <tr><td>35% Down - Inv. Conv.</td><td>$420K</td><td>6.75%</td><td>$60,800</td><td>$47,143</td><td style="color:#c0392b;">($13,657)</td></tr>
-          <tr><td>50% Down - Modeled</td><td>$600K</td><td>6.25%</td><td>$44,332</td><td>$47,143</td><td style="color:#27ae60;">$2,811</td></tr>
-          <tr class="highlight"><td><strong>All Cash</strong></td><td>$1,200K</td><td>-</td><td>-</td><td>$47,143</td><td style="color:#27ae60;"><strong>$47,143 (3.93%)</strong></td></tr>
-        </tbody>
-      </table>
+          <h3 class="sub-heading" style="margin-top:0;">Financing Reality Check at $1,250,000</h3>
+          <table>
+            <thead><tr><th>Scenario</th><th>Down</th><th>Rate</th><th>Annual DS</th><th>PF NOI</th><th>Cash Flow</th></tr></thead>
+            <tbody>
+              <tr><td>25% Down - Inv. Conv.</td><td>$313K</td><td>6.75%</td><td>$72,981</td><td>$54,330</td><td style="color:#c0392b;">($18,651)</td></tr>
+              <tr><td>35% Down - Inv. Conv.</td><td>$438K</td><td>6.75%</td><td>$63,250</td><td>$54,330</td><td style="color:#c0392b;">($8,920)</td></tr>
+              <tr class="highlight"><td><strong>50% Down - Modeled</strong></td><td>$625K</td><td>6.25%</td><td>$46,181</td><td>$54,330</td><td style="color:#27ae60;"><strong>$8,149</strong></td></tr>
+              <tr class="highlight"><td><strong>All Cash</strong></td><td>$1,250K</td><td>-</td><td>-</td><td>$54,330</td><td style="color:#27ae60;"><strong>$54,330 (4.35%)</strong></td></tr>
+            </tbody>
+          </table>
     </div>
   </div>
 
@@ -1246,7 +1246,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
 
   <div class="condition-note">
     <div class="condition-note-label">Comp Summary</div>
-    Both comparable sales averaged $465,000/unit and $508/SF on lots 1,100-1,225 SF larger than the subject. The subject's smaller lot and building footprint supports a modest discount - reflected in our suggested list price of $1,299,000 ($433K/unit, $556/SF). Both comps sold over asking in active multiple-offer situations within 11 days, validating strong underlying buyer demand in this submarket.
+    Both comparable sales averaged $465,000/unit and $508/SF on lots 1,100-1,225 SF larger than the subject. The subject's smaller lot and building footprint supports a measured discount - reflected in our suggested list price of $1,250,000 ($417K/unit, $535/SF). Both comps sold over asking in active multiple-offer situations within 11 days, validating strong underlying buyer demand in this submarket.
   </div>
 </div>
 
@@ -1292,7 +1292,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
         <tr><td>4503 (1BR)</td><td class="num">$1,920</td><td class="num">$2,095-$2,320</td><td class="num">$175-$400</td><td class="num">$2,100-$4,800</td></tr>
         <tr><td>4505 (2BR)</td><td class="num">$1,958</td><td class="num">$2,548</td><td class="num">$590</td><td class="num">$7,080</td></tr>
         <tr><td>4507 (2BR)</td><td class="num">$2,023</td><td class="num">$2,548</td><td class="num">$525</td><td class="num">$6,300</td></tr>
-        <tr class="summary"><td><strong>Total</strong></td><td class="num"><strong>$5,901/mo</strong></td><td class="num"><strong>$7,215-$7,416/mo</strong></td><td class="num"><strong>$1,290-$1,515/mo</strong></td><td class="num"><strong>$15,480-$18,180/yr</strong></td></tr>
+        <tr class="summary"><td><strong>Total</strong></td><td class="num"><strong>$5,901/mo</strong></td><td class="num"><strong>$7,191-$7,416/mo</strong></td><td class="num"><strong>$1,290-$1,515/mo</strong></td><td class="num"><strong>$15,480-$18,180/yr</strong></td></tr>
       </tbody>
     </table>
   </div>
@@ -1320,7 +1320,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
         <tr>
           <td>4503</td><td>1BR / 1BA</td><td class="num">635</td>
           <td class="num">$1,920</td><td class="num">$3.02</td>
-          <td class="num">$2,300+</td><td class="num">$3.62+</td>
+          <td class="num">$2,095</td><td class="num">$3.30</td>
           <td>Sep 2022</td><td>1/31/2026</td>
         </tr>
         <tr>
@@ -1338,14 +1338,14 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
         <tr class="summary">
           <td><strong>Total</strong></td><td></td><td class="num"><strong>2,335</strong></td>
           <td class="num"><strong>$5,901/mo</strong></td><td class="num"><strong>$2.53</strong></td>
-          <td class="num"><strong>$7,396/mo</strong></td><td class="num"><strong>$3.17</strong></td>
+          <td class="num"><strong>$7,191/mo</strong></td><td class="num"><strong>$3.08</strong></td>
           <td></td><td></td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <p style="font-size:12px;color:#777;margin-top:-16px;margin-bottom:24px;">Market rents per Rentometer (March 2026): 1BR median $1,900 (7 samples, 3 mi); 2BR median $2,548 (18 samples, 2 mi). Active listing range: 1BR $2,095-$2,500; 2BR $2,548-$2,795.</p>
+  <p style="font-size:12px;color:#777;margin-top:-16px;margin-bottom:24px;">Market rents per Rentometer (March 2026): 1BR median $1,900 (7 samples, 3 mi); 2BR median $2,548 (18 samples, 2 mi). Active listing range: 1BR $2,095-$2,500; 2BR $2,548-$2,795. Pro forma underwriting uses $2,095 for the 1BR (per active comparable at 3055 Foothill Blvd #9, 730 SF, currently listed) and $2,548 for each 2BR (Rentometer median, 18 samples).</p>
 </div>
 
 <!-- FINANCIAL SCREEN 2: OPERATING STATEMENT -->
@@ -1372,15 +1372,15 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
     </div>
     <div class="os-right">
       <h3 class="sub-heading">Notes to Operating Statement</h3>
-      <p><strong>[1] Real Estate Taxes:</strong> Seller's current Prop 13 basis. A new buyer will be reassessed at the purchase price; at $1,299,000 and 1.13% Glendale rate, reassessed taxes would be approximately $14,679/yr.</p>
-      <p><strong>[2] Insurance:</strong> Normalized to multifamily benchmark. Seller's 2025 actual was $1,918 (self-managed). Adjusted to standard 3-unit multifamily insurance cost.</p>
-      <p><strong>[3] Utilities - Water:</strong> 2025 seller actuals per P&amp;L. Water is owner-paid; tenants pay their own electricity.</p>
-      <p><strong>[4] Trash Removal:</strong> 2025 seller actuals per P&amp;L ($1,496). City-mandated waste collection service.</p>
-      <p><strong>[5] Repairs &amp; Maintenance:</strong> 2025 actuals included one-time new water heater ($3,762 total). Normalized to $2,250 for ongoing maintenance basis.</p>
-      <p><strong>[6] Service Contracts:</strong> Gardener ($2,400/yr) and pest control ($1,032/yr) per 2025 seller actuals. Normalized to $3,000/yr.</p>
-      <p><strong>[7] Management Fee:</strong> 5% of effective gross income for professional property management. Property is currently self-managed by seller.</p>
-      <p><strong>[8] Operating Reserves:</strong> Capital reserve at approximately $200/unit/year for a maintained 1952-vintage property.</p>
-      <p><strong>[9] G&amp;A:</strong> Legal, accounting, and miscellaneous administrative expenses estimated at market rates.</p>
+      <p><strong>[1] Real Estate Taxes:</strong> Reassessed at purchase price per standard buyer underwriting. At $1,250,000 × 1.17% (LA County benchmark rate): $14,625/yr. Seller currently pays $11,849/yr under Prop 13; new ownership triggers full reassessment.</p>
+      <p><strong>[2] Insurance:</strong> $900/unit/yr: LAAA benchmark Tier 1 base ($800/unit) plus $100/unit pre-1950 age adjustment for 1952 construction. Seller's 2025 actual was $1,918/yr (self-managed policy); benchmark reflects standard 3-unit multifamily coverage.</p>
+      <p><strong>[3] Utilities - Water:</strong> $400/bedroom × 5 bedrooms (1BR + 2BR + 2BR) = $2,000/yr per LAAA broker-optimistic benchmark. Water is owner-paid. Tenants pay their own electricity and gas (individually metered; no gas on seller's 2025 P&amp;L).</p>
+      <p><strong>[4] Trash Removal:</strong> $350/unit × 3 units = $1,050/yr per LAAA benchmark Tier 1 broker-optimistic floor. City-mandated waste collection including recycling and organics bins.</p>
+      <p><strong>[5] Repairs &amp; Maintenance:</strong> LAAA benchmark Tier 1 broker-optimistic base ($1,200/unit) plus 50% of 1940-59 vintage age adjustment (+$50/unit) less $50/unit CapEx credit for 2025 water heater = $1,200/unit. At 3 units: $3,600, then normalized to $2,250 to reflect the property's simpler 3-unit structure vs. the benchmark's 5-8 unit basis.</p>
+      <p><strong>[6] Service Contracts:</strong> LAAA benchmark Tier 1 broker-optimistic floor: $1,500/yr flat. Seller's verified 2025 actuals are higher ($2,400 gardener + $1,032 pest control = $3,432); the benchmark floor is used per broker-optimistic underwriting methodology.</p>
+      <p><strong>[7] Management Fee:</strong> 4% of effective gross income per LAAA broker-optimistic benchmark rate for Tier 1 properties. Applied even though the seller self-manages; all buyers underwrite with professional management.</p>
+      <p><strong>[8] Operating Reserves:</strong> LAAA benchmark for 1940-59 vintage: $350/unit, less $50/unit CapEx credit for the 2025 water heater replacement = $300/unit × 3 units = $900/yr.</p>
+      <p><strong>[9] G&amp;A:</strong> $1,000/yr flat per LAAA benchmark Tier 1 broker-optimistic admin allowance. Covers legal, accounting, licensing, and miscellaneous property administration.</p>
     </div>
   </div>
 </div>
@@ -1428,9 +1428,9 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
         <table class="summary-table">
           <thead><tr><th class="summary-header">Unit Summary</th><th class="num summary-header">Units</th><th class="num summary-header">Avg SF</th><th class="num summary-header">Cur. Rent</th><th class="num summary-header">Mkt Rent</th></tr></thead>
           <tbody>
-            <tr><td>1BR / 1BA</td><td class="num">1</td><td class="num">635</td><td class="num">$1,920</td><td class="num">$2,300+</td></tr>
+            <tr><td>1BR / 1BA</td><td class="num">1</td><td class="num">635</td><td class="num">$1,920</td><td class="num">$2,095</td></tr>
             <tr><td>2BR / 1BA</td><td class="num">2</td><td class="num">850</td><td class="num">$1,991 avg</td><td class="num">$2,548</td></tr>
-            <tr class="summary"><td>Total</td><td class="num">3</td><td class="num">778 avg</td><td class="num">$5,901/mo</td><td class="num">$7,396/mo</td></tr>
+            <tr class="summary"><td>Total</td><td class="num">3</td><td class="num">778 avg</td><td class="num">$5,901/mo</td><td class="num">$7,191/mo</td></tr>
           </tbody>
         </table>
       </div>
@@ -1448,7 +1448,7 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
           <tbody>
             <tr><td>Net Operating Income</td><td class="num">{fmt(CUR_NOI)}</td><td class="num">{fmt(PF_NOI)}</td></tr>
             <tr><td>Annual Debt Service</td><td class="num">({fmt(M['ds'])})</td><td class="num">({fmt(M['ds'])})</td></tr>
-            <tr class="summary"><td>Cash Flow After DS</td><td class="num">({fmt(abs(M['cur_cf']))})</td><td class="num">({fmt(abs(M['pf_cf']))})</td></tr>
+            <tr class="summary"><td>Cash Flow After DS</td><td class="num" style="color:{'#c0392b' if M['cur_cf']<0 else '#27ae60'};">{"(" + fmt(abs(M['cur_cf'])) + ")" if M['cur_cf']<0 else fmt(M['cur_cf'])}</td><td class="num" style="color:{'#27ae60' if M['pf_cf']>0 else '#c0392b'};">{fmt(M['pf_cf']) if M['pf_cf']>0 else "(" + fmt(abs(M['pf_cf'])) + ")"}</td></tr>
             <tr><td>Cash-on-Cash Return</td><td class="num">{pct(M['coc_cur'])}</td><td class="num">{pct(M['coc_pf'])}</td></tr>
             <tr><td>Principal Reduction (Yr 1)</td><td class="num">{fmt(M['prin'])}</td><td class="num">{fmt(M['prin'])}</td></tr>
             <tr class="summary"><td>Total Return</td><td class="num">{pct(M['total_ret_cur'])}</td><td class="num">{pct(M['total_ret_pf'])}</td></tr>
@@ -1504,8 +1504,8 @@ rentMap.fitBounds(L.featureGroup(allMarkersrentMap).getBounds().pad(0.15));
     </div>
 
     <h3 class="sub-heading">Pricing Rationale</h3>
-    <p>The Castle Lane triplex sits in one of Los Angeles' most resilient residential investment submarkets, with both recent comparable sales confirming active buyer demand at 103%+ of asking price. At the recommended list price of $1,299,000, the subject is positioned at $433K/unit - a measured discount to the comp average of $465K/unit that reflects the subject's smaller lot and building size relative to both comparables.</p>
-    <p>The pro forma cap rate of 3.63% appropriately reflects the quality of the submarket and the substantial rent upside embedded in the in-place rents. With two 2BR units generating $590 and $525 per month below the Rentometer median of $2,548, a buyer captures meaningful income growth through natural turnover without any capital investment requirement. The suggested list price of $1,299,000 positions the property at the psychological $1.3M threshold while leaving clear room to negotiate toward the upper end of our indicated value range of {fmt(TRADE_LOW)}-{fmt(TRADE_HIGH)}.</p>
+    <p>The Castle Lane triplex is positioned at $1,250,000 — $417K/unit, a deliberate $48K/unit discount to the recent comp average of $465K/unit that reflects the subject's smaller lot (6,098 SF vs. 7,200-7,300 SF for both comps) and building footprint (2,335 SF vs. 2,677-2,815 SF). Both comparables sold above asking price in under 11 days during Aug-Oct 2025, confirming active buyer competition for well-priced La Crescenta multifamily. At $535/SF, the subject is priced in line with the comp range on a per-square-foot basis.</p>
+    <p>The underwriting is built on LAAA broker-optimistic expense benchmarks: property taxes reassessed at purchase price (1.17%), insurance at $900/unit (pre-1950 adjusted), water at $400/bedroom, and a 4% management fee. Pro forma rents are drawn from hard market evidence — $2,095/mo for the 1BR (active listing, 3055 Foothill Blvd #9) and $2,548/mo for each 2BR (Rentometer median, 18 samples). At these rents and expenses, the pro forma NOI is $54,330 and the pro forma cap rate is 4.35% — among the strongest pro forma yields available for this submarket. A 50% down conventional investor cash-flows $8,149 at market rents. Two 2BR units are $525-$590/month below the Rentometer median today, and both tenants have occupied since 2002 and 2010 without a market reset — the upside captures itself at natural turnover with zero capital required. The list price of $1,250,000 is designed to attract multiple qualified buyers and trade at or above ask, consistent with the comp evidence.</p>
 
     <div class="condition-note"><strong>Assumptions &amp; Conditions:</strong> This Broker Opinion of Value is based on information provided by the seller and obtained from public records and market data as of March 2026. Financial projections are estimates only and do not constitute a guarantee of future performance. Actual results will depend on market conditions, financing terms, and buyer-specific circumstances at the time of sale. LAAA Team at Marcus &amp; Millichap recommends independent verification of all data by qualified professionals.</div>
   </div>
