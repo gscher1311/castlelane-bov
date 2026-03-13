@@ -690,7 +690,7 @@ allMarkerssaleMap.push(c1);
 var c2 = L.marker([{COMP2_LAT},{COMP2_LNG}],{{icon:L.divIcon({{className:'',html:'<div style="background:#1B3A5C;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);">2</div>',iconSize:[26,26],iconAnchor:[13,13]}})}}
 ).addTo(saleMap).bindPopup('<b>#2: 3357 Honolulu Ave, La Canada Flintridge</b><br>3 Units | $1,450,000 | Oct 2025');
 allMarkerssaleMap.push(c2);
-var c3 = L.marker([{COMP3_LAT},{COMP3_LNG}],{{icon:L.divIcon({{className:'',html:'<div style="background:#1B3A5C;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);">3</div>',iconSize:[26,26],iconAnchor:[13,13]}})}})
+var c3 = L.marker([{COMP3_LAT},{COMP3_LNG}],{{icon:L.divIcon({{className:'',html:'<div style="background:#1B3A5C;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);">3</div>',iconSize:[26,26],iconAnchor:[13,13]}})}}
 ).addTo(saleMap).bindPopup('<b>#3: 4543 Rockland Pl, La Canada Flintridge</b><br>2 Units | $1,700,000 | Oct 2025');
 allMarkerssaleMap.push(c3);
 saleMap.fitBounds(L.featureGroup(allMarkerssaleMap).getBounds().pad(0.15));
